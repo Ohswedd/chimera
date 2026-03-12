@@ -1,4 +1,4 @@
-"""Tests for chimera.keygen — HKDF-SHA256 parameter derivation."""
+"""Tests for chimera.keygen -- HKDF-SHA256 parameter derivation."""
 
 from __future__ import annotations
 
@@ -27,11 +27,7 @@ class TestDeriveParams:
         assert abs(p.pitch_shift_semitones) < 1e-9
         assert abs(p.formant_warp - 1.0) < 1e-9
         assert abs(p.breathiness) < 1e-9
-        assert abs(p.temporal_jitter) < 1e-9
         assert abs(p.spectral_tilt) < 1e-9
-        assert abs(p.vibrato_rate) < 1e-9
-        assert abs(p.vibrato_depth) < 1e-9
-        assert abs(p.subharmonic_mix) < 1e-9
 
     def test_different_salts_produce_different_params(self):
         p1 = derive_params("key", salt="salt-A")
@@ -51,14 +47,17 @@ class TestDeriveParams:
     def test_param_ranges_at_full_intensity(self):
         for trial in range(5):
             p = derive_params(f"range-test-{trial}", intensity=1.0)
-            assert -10.5 <= p.pitch_shift_semitones <= 10.5
-            assert 0.75 <= p.formant_warp <= 1.25
-            assert 0.0 <= p.breathiness <= 0.50
-            assert 0.0 <= p.temporal_jitter <= 0.02
-            assert -4.5 <= p.spectral_tilt <= 4.5
-            assert 0.0 <= p.vibrato_rate <= 7.5
-            assert 0.0 <= p.vibrato_depth <= 0.45
-            assert 0.0 <= p.subharmonic_mix <= 0.16
+            assert -8.5 <= p.pitch_shift_semitones <= 8.5
+            assert 0.78 <= p.formant_warp <= 1.22
+            assert 0.0 <= p.breathiness <= 0.12
+            assert -2.0 <= p.spectral_tilt <= 2.0
+
+    def test_minimum_identity_shift_enforced(self):
+        """At non-zero intensity, pitch and formant must be significantly shifted."""
+        for trial in range(10):
+            p = derive_params(f"min-test-{trial}", intensity=0.8)
+            assert abs(p.pitch_shift_semitones) >= 3.9
+            assert abs(p.formant_warp - 1.0) >= 0.11
 
     def test_empty_key_raises(self):
         with pytest.raises(KeyDerivationError):
@@ -73,7 +72,7 @@ class TestDeriveParams:
             derive_params("key", intensity=-0.1)
 
     def test_unicode_key_accepted(self):
-        p = derive_params("chiave-セキュリティ-🔐", intensity=0.5)
+        p = derive_params("chiave-\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3", intensity=0.5)
         assert p is not None
 
     def test_speaker_label_stored(self):

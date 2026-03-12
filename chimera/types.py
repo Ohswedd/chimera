@@ -55,22 +55,14 @@ class MaskParams:
     Fields
     ------
     pitch_shift_semitones : float
-        F0 shift in semitones  [−10, +10].
+        Pitch shift in semitones  [-8, +8], minimum |4| enforced after scaling.
     formant_warp : float
-        Spectral-envelope frequency warp factor  [0.78, 1.22].
-        < 1 → longer virtual vocal tract (deeper);  > 1 → shorter (brighter).
+        LPC vocal-tract length ratio  [0.80, 1.20], minimum 12% enforced.
+        < 1 -> longer virtual vocal tract (deeper);  > 1 -> shorter (brighter).
     spectral_tilt : float
-        Linear gain slope in dB / kHz  [−4, +4].
+        Linear gain slope in dB / kHz  [−1.5, +1.5].
     breathiness : float
-        Aperiodicity blend toward 1.0  [0, 0.45].
-    temporal_jitter : float
-        Std-dev of F0 multiplicative noise  [0, 0.018].
-    vibrato_rate : float
-        Sinusoidal F0 modulation rate in Hz  [0, 7].
-    vibrato_depth : float
-        Sinusoidal F0 modulation depth in semitones  [0, 0.4].
-    subharmonic_mix : float
-        Fraction of sub-octave energy blended into SP  [0, 0.15].
+        Filtered-noise blend amount  [0, 0.12].
     intensity : float
         Master scalar applied to all perceptual offsets  [0, 1].
     seed : int
@@ -83,10 +75,6 @@ class MaskParams:
     formant_warp: float
     spectral_tilt: float
     breathiness: float
-    temporal_jitter: float
-    vibrato_rate: float
-    vibrato_depth: float
-    subharmonic_mix: float
     intensity: float
     seed: int
     speaker_label: str | None = None
@@ -98,10 +86,6 @@ class MaskParams:
             formant_warp=1.0 + (self.formant_warp - 1.0) * factor,
             spectral_tilt=self.spectral_tilt * factor,
             breathiness=self.breathiness * factor,
-            temporal_jitter=self.temporal_jitter * factor,
-            vibrato_rate=self.vibrato_rate * factor,
-            vibrato_depth=self.vibrato_depth * factor,
-            subharmonic_mix=self.subharmonic_mix * factor,
             intensity=self.intensity * factor,
             seed=self.seed,
             speaker_label=self.speaker_label,
@@ -116,10 +100,6 @@ class MaskParams:
             f"  Formant warp       : {self.formant_warp:.5f}×",
             f"  Spectral tilt      : {self.spectral_tilt:+.3f} dB/kHz",
             f"  Breathiness        : {self.breathiness:.4f}",
-            f"  Temporal jitter    : {self.temporal_jitter:.5f} σ",
-            f"  Vibrato rate       : {self.vibrato_rate:.3f} Hz",
-            f"  Vibrato depth      : {self.vibrato_depth:.4f} st",
-            f"  Subharmonic mix    : {self.subharmonic_mix:.4f}",
             f"  Master intensity   : {self.intensity:.3f}",
             "─" * 44,
         ]

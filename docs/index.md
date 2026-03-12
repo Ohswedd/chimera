@@ -3,14 +3,14 @@
 **Cryptographically irreversible, speaker-aware voice anonymisation.**
 
 Chimera disguises the identity of one or more speakers in any audio recording.
-It operates entirely on CPU — no cloud, no GPU, no pre-trained model weights.
+It operates entirely on CPU -- no cloud, no GPU, no pre-trained model weights.
 
 ## Core guarantees
 
-- **One-way** — given only the output audio and the key, no known algorithm can recover the original speaker's identity.
-- **Deterministic** — the same key always produces the same output. The transformation is fully auditable.
-- **Natural** — WORLD high-quality vocoder synthesis preserves glottal pulse structure. The output sounds like a real human, not a voice-changer.
-- **Speaker-aware** — built-in VAD and diarization automatically identify and independently mask each speaker.
+- **One-way** -- given only the output audio and the key, no known algorithm can recover the original speaker's identity.
+- **Deterministic** -- the same key always produces the same output. The transformation is fully auditable.
+- **Natural** -- Praat's LPC source-filter model decomposes voice into glottal source and vocal tract filter, enabling natural pitch and formant shifting via PSOLA resynthesis. The output sounds like a real human, not a voice-changer.
+- **Speaker-aware** -- built-in VAD and diarization automatically identify and independently mask each speaker.
 
 ## Navigation
 

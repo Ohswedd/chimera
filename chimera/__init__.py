@@ -3,11 +3,13 @@ Chimera
 =======
 Local, deterministic, cryptographically one-way voice anonymisation.
 
-Chimera disguises spoken-voice identity in audio recordings by applying
-a seven-layer acoustic transformation stack derived from a user-supplied
-passphrase.  It is the only open-source library that combines:
+Chimera disguises spoken-voice identity in audio recordings using
+Praat's LPC source-filter model for combined pitch and formant
+transformation, with parameters derived from a user-supplied
+passphrase.  It combines:
 
-  • WORLD high-quality vocoder analysis/synthesis
+  • Praat LPC analysis + PSOLA for natural pitch + formant shifting
+  • Source-filter decomposition for speech-aware vocal tract modification
   • Automatic Voice Activity Detection (no GPU, no cloud)
   • MFCC-based speaker diarization (per-speaker independent masking)
   • Key-derived deterministic parameterisation (HKDF-SHA256)
@@ -88,6 +90,6 @@ __all__ = [
     "UnsupportedSampleRateError",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Ohswedd"
 __license__ = "MIT"

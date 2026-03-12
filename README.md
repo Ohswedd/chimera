@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🦎 Chimera
+# Chimera
 
 ### Cryptographically Irreversible, Speaker-Aware Voice Anonymisation
 
@@ -26,14 +26,14 @@ acoustic identity.
 
 | Feature | Chimera | Pitch shift | Neural VC |
 |---|:---:|:---:|:---:|
-| Fully local / offline | ✅ | ✅ | ⚠️ |
-| No model weights | ✅ | ✅ | ❌ |
-| Multi-speaker, per-speaker keys | ✅ | ❌ | ❌ |
-| Automatic VAD (ignores noise) | ✅ | ❌ | ❌ |
-| Natural-sounding output | ✅ | ❌ | ✅ |
-| Deterministic / auditable | ✅ | ❌ | ❌ |
-| Cryptographically one-way | ✅ | ❌ | ❌ |
-| Real-time microphone support | ✅ | ✅ | GPU |
+| Fully local / offline | :white_check_mark: | :white_check_mark: | :warning: |
+| No model weights | :white_check_mark: | :white_check_mark: | :x: |
+| Multi-speaker, per-speaker keys | :white_check_mark: | :x: | :x: |
+| Automatic VAD (ignores noise) | :white_check_mark: | :x: | :x: |
+| Natural-sounding output | :white_check_mark: | :x: | :white_check_mark: |
+| Deterministic / auditable | :white_check_mark: | :x: | :x: |
+| Cryptographically one-way | :white_check_mark: | :x: | :x: |
+| Real-time microphone support | :white_check_mark: | :white_check_mark: | GPU |
 
 ---
 
@@ -43,33 +43,27 @@ Chimera applies six processing stages to every audio input:
 
 ```
 Input audio
-    │
-    ▼  [1] VAD — isolates speech from noise, music, silence
-    │
-    ▼  [2] Diarization — MFCC k-means, assigns segments to speakers
-    │
-    ▼  [3] Key Derivation — HKDF-SHA256 per speaker → 8 parameters
-    │
-    ▼  [4] 7-Layer Vocoder Stack (WORLD)
-    │       L1 Pitch shift       F0 × 2^(Δst/12)
-    │       L2 Sinusoidal vibrato modulation
-    │       L3 Micro-temporal jitter
-    │       L4 Formant warp      SP resampled at α·f
-    │       L5 Spectral tilt     ±4 dB/kHz ramp
-    │       L6 Sub-harmonic injection
-    │       L7 Breathiness blend toward noise
-    │
-    ▼  [5] COWL — Cryptographic One-Way Layer
-    │       Sub-perceptual spectral noise (SSNI)
-    │       Phase randomisation
-    │       Non-linear spectral quantisation (NLSQ)
-    │
-    ▼  [6] Cross-fade stitching + normalisation
-    │
+    |
+    v  [1] VAD -- isolates speech from noise, music, silence
+    |
+    v  [2] Diarization -- MFCC k-means, assigns segments to speakers
+    |
+    v  [3] Key Derivation -- HKDF-SHA256 per speaker -> 5 parameters
+    |
+    v  [4] Voice Transform (Praat LPC source-filter model)
+    |       Pitch shift     via PSOLA resynthesis
+    |       Formant shift   via LPC vocal-tract length scaling
+    |
+    v  [5] COWL -- Cryptographic One-Way Layer
+    |       Sub-perceptual spectral noise (SSNI)
+    |       Micro phase perturbation (MPP)
+    |
+    v  [6] Cross-fade stitching + level matching
+    |
 Output audio (mono float64, same sample rate)
 ```
 
-All randomness is derived from the key via HKDF, making the transformation **fully deterministic** and **fully one-way**: same key → same output; output → original is computationally infeasible.
+All randomness is derived from the key via HKDF, making the transformation **fully deterministic** and **fully one-way**: same key -> same output; output -> original is computationally infeasible.
 
 ---
 
@@ -149,7 +143,7 @@ from chimera.realtime import RealtimeAnonymiser
 
 anon = RealtimeAnonymiser(key="my-secret", preset="moderate")
 anon.start()
-input("🎙  Recording — press Enter to stop...")
+input("Recording -- press Enter to stop...")
 anon.stop()
 anon.save("recorded_anonymous.wav")
 ```
@@ -170,34 +164,30 @@ for masked_chunk in mask_stream(my_chunk_generator, sr=22050,
 p = chimera.get_params("my-secret", preset="strong")
 print(p.summary())
 
-# Chimera MaskParams
-# ─────────────────────────────────────────────
+#        Chimera MaskParams
+# --------------------------------------------
 #   Speaker label      : (none)
 #   Pitch shift        : +5.743 st
-#   Formant warp       : 0.91234×
-#   Spectral tilt      : -2.814 dB/kHz
-#   Breathiness        : 0.3122
-#   Temporal jitter    : 0.01203 σ
-#   Vibrato rate       : 4.210 Hz
-#   Vibrato depth      : 0.2891 st
-#   Subharmonic mix    : 0.0984
+#   Formant warp       : 0.91234x
+#   Spectral tilt      : -1.214 dB/kHz
+#   Breathiness        : 0.0812
 #   Master intensity   : 0.780
-# ─────────────────────────────────────────────
+# --------------------------------------------
 ```
 
 ---
 
 ## Presets
 
-| Preset | Intensity | ASV EER† | Use case |
+| Preset | Intensity | ASV EER | Use case |
 |---|---|---|---|
 | `whisper` | 0.12 | ~5 % | Soft watermarking |
 | `subtle` | 0.28 | ~15 % | Light disguise |
 | `moderate` | 0.52 | ~35 % | Speaker unrecognisable to humans |
 | `strong` | 0.78 | ~48 % | ASV systems fail |
-| `extreme` | 1.00 | ~50 % | Maximum — content only |
+| `extreme` | 1.00 | ~50 % | Maximum -- content only |
 
-*† Indicative Equal Error Rate against ECAPA-TDNN (VoicePrivacy 2024 protocol).*
+*Indicative Equal Error Rate against ECAPA-TDNN (VoicePrivacy 2024 protocol).*
 
 ---
 
@@ -215,19 +205,18 @@ print(p.summary())
 
 Chimera is designed with three security properties:
 
-**Determinism** — `F(audio, key)` always returns the same output.
+**Determinism** -- `F(audio, key)` always returns the same output.
 Every bit of randomness is derived from the key via HKDF-SHA256.
 
-**One-way** — Given `F(audio, key)`, recovering the original speaker's acoustic identity requires simultaneously inverting:
-1. Non-linear μ-law spectral quantisation (ill-posed)
-2. Key-seeded phase randomisation (requires HKDF seed)
-3. Key-derived sub-perceptual noise injection (requires HMAC sub-key)
-4. Seven vocoder transformation layers (non-invertible without all params)
+**One-way** -- Given `F(audio, key)`, recovering the original speaker's acoustic identity requires simultaneously inverting:
+1. Key-seeded micro phase perturbation (requires HKDF seed)
+2. Key-derived sub-perceptual noise injection (requires HMAC sub-key)
+3. Praat LPC pitch + formant transform (non-invertible without all params)
 
-**Key independence** — HKDF-SHA256 provides 128-bit second-preimage resistance.
+**Key independence** -- HKDF-SHA256 provides 128-bit second-preimage resistance.
 Per-speaker keys are domain-separated: `key + ":chimera:spk:" + speaker_id`.
 
-> ⚠️ Chimera is a privacy-enhancing tool, not an encryption scheme. For high-stakes deployments, combine it with access control, key rotation, and additional anonymisation measures. See the [Security wiki page](https://github.com/Ohswedd/chimera/wiki/Security) for the full threat model.
+> Chimera is a privacy-enhancing tool, not an encryption scheme. For high-stakes deployments, combine it with access control, key rotation, and additional anonymisation measures. See the [Security wiki page](https://github.com/Ohswedd/chimera/wiki/Security) for the full threat model.
 
 ---
 
@@ -243,30 +232,30 @@ Supported sample rates: `8 000`, `16 000`, `22 050`, `24 000`, `44 100`, `48 000
 
 ```
 chimera/
-├── chimera/              # Library source
-│   ├── __init__.py       # Public API surface
-│   ├── core.py           # High-level functions: mask_file, mask_array, get_params
-│   ├── pipeline.py       # ChimeraPipeline — full orchestration
-│   ├── keygen.py         # HKDF-SHA256 parameter derivation
-│   ├── vad.py            # Voice Activity Detector
-│   ├── diarize.py        # MFCC k-means speaker diarizer
-│   ├── transform.py      # 7-layer WORLD vocoder stack
-│   ├── irreversible.py   # Cryptographic One-Way Layer (COWL)
-│   ├── realtime.py       # Real-time microphone / streaming engine
-│   ├── presets.py        # Named intensity presets
-│   ├── types.py          # MaskParams, ChimeraResult, MaskMode, …
-│   ├── exceptions.py     # Exception hierarchy
-│   └── py.typed          # PEP 561 marker
-├── tests/                # Full test suite (26 tests)
-├── examples/             # Runnable usage examples
-├── docs/                 # Documentation
-├── benchmarks/           # Performance benchmarks
-├── paper/                # Academic paper (PDF)
-├── .github/workflows/    # CI and release workflows
-├── pyproject.toml
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-└── LICENSE
+|-- chimera/              # Library source
+|   |-- __init__.py       # Public API surface
+|   |-- core.py           # High-level functions: mask_file, mask_array, get_params
+|   |-- pipeline.py       # ChimeraPipeline -- full orchestration
+|   |-- keygen.py         # HKDF-SHA256 parameter derivation
+|   |-- vad.py            # Voice Activity Detector
+|   |-- diarize.py        # MFCC k-means speaker diarizer
+|   |-- transform.py      # Praat LPC source-filter voice transform
+|   |-- irreversible.py   # Cryptographic One-Way Layer (COWL)
+|   |-- realtime.py       # Real-time microphone / streaming engine
+|   |-- presets.py        # Named intensity presets
+|   |-- types.py          # MaskParams, ChimeraResult, MaskMode, ...
+|   |-- exceptions.py     # Exception hierarchy
+|   `-- py.typed          # PEP 561 marker
+|-- tests/                # Full test suite
+|-- examples/             # Runnable usage examples
+|-- docs/                 # Documentation
+|-- benchmarks/           # Performance benchmarks
+|-- paper/                # Academic paper (PDF)
+|-- .github/workflows/    # CI and release workflows
+|-- pyproject.toml
+|-- CHANGELOG.md
+|-- CONTRIBUTING.md
+`-- LICENSE
 ```
 
 ---
@@ -311,7 +300,7 @@ python -m build
 
 The full technical paper is available at [`paper/chimera_paper.pdf`](paper/chimera_paper.pdf).
 
-It covers the full threat model (A1–A4), HKDF key derivation, all seven vocoder layers,
+It covers the full threat model (A1-A4), HKDF key derivation, voice transformation layers,
 COWL security argument, diarization architecture, real-time latency profile,
 comparison with state-of-the-art, and 15 references.
 
@@ -323,7 +312,7 @@ comparison with state-of-the-art, and 15 references.
   author  = {Ohswedd},
   year    = {2026},
   url     = {https://github.com/Ohswedd/chimera},
-  version = {0.1.0},
+  version = {0.2.0},
   license = {MIT}
 }
 ```
@@ -340,4 +329,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE) © 2026 Ohswedd
+[MIT](LICENSE) 2026 Ohswedd

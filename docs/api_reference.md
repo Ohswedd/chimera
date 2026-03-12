@@ -29,9 +29,9 @@ Anonymise an audio file and write the result.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `input_path` | `str\|Path` | — | Source audio file |
-| `output_path` | `str\|Path` | — | Destination audio file |
-| `key` | `str` | — | Masking passphrase |
+| `input_path` | `str\|Path` | -- | Source audio file |
+| `output_path` | `str\|Path` | -- | Destination audio file |
+| `key` | `str` | -- | Masking passphrase |
 | `salt` | `str` | `"chimera-v1"` | Domain-separation salt |
 | `intensity` | `float` | `1.0` | Masking strength in [0, 1] |
 | `preset` | `str\|None` | `None` | Named preset; overrides `intensity` |
@@ -139,19 +139,15 @@ result = pipeline.process(audio, sr)
 
 ### `MaskParams`
 
-Frozen dataclass holding all eight transformation parameters plus metadata.
+Frozen dataclass holding the transformation parameters plus metadata.
 
 ```python
 @dataclass(frozen=True)
 class MaskParams:
-    pitch_shift_semitones: float   # [-10, +10]
-    formant_warp:          float   # [0.78, 1.22]
-    spectral_tilt:         float   # [-4, +4] dB/kHz
-    breathiness:           float   # [0, 0.45]
-    temporal_jitter:       float   # [0, 0.018] σ
-    vibrato_rate:          float   # [0, 7] Hz
-    vibrato_depth:         float   # [0, 0.40] st
-    subharmonic_mix:       float   # [0, 0.15]
+    pitch_shift_semitones: float   # [-8, +8], min |4| enforced
+    formant_warp:          float   # [0.80, 1.20], min 12% enforced
+    spectral_tilt:         float   # [-1.5, +1.5] dB/kHz
+    breathiness:           float   # [0.01, 0.10]
     intensity:             float   # [0, 1]
     seed:                  int
     speaker_label:         str | None
@@ -187,7 +183,7 @@ class ChimeraResult:
 ```python
 @dataclass
 class SpeakerSegment:
-    speaker_id: str          # "SPEAKER_0", "SPEAKER_1", … or "SILENCE"
+    speaker_id: str          # "SPEAKER_0", "SPEAKER_1", ... or "SILENCE"
     start_sec:  float
     end_sec:    float
     is_voiced:  bool

@@ -58,6 +58,7 @@ class TestCOWL:
         p_high = derive_params("same-key", intensity=1.0)
         r_low = apply_cowl(long_audio, sr, p_low)
         r_high = apply_cowl(long_audio, sr, p_high)
-        diff_low = np.mean((long_audio - r_low) ** 2)
-        diff_high = np.mean((long_audio - r_high) ** 2)
-        assert diff_high > diff_low, "Higher intensity must introduce more distortion"
+        # Use correlation (scale-invariant) since COWL normalises output
+        corr_low = np.corrcoef(long_audio, r_low)[0, 1]
+        corr_high = np.corrcoef(long_audio, r_high)[0, 1]
+        assert corr_high < corr_low, "Higher intensity must introduce more distortion"

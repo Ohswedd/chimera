@@ -3,7 +3,7 @@ chimera.pipeline
 ~~~~~~~~~~~~~~~~
 The central processing pipeline that ties together:
 
-  VAD → Diarization → Parameter Assignment → Vocoder Transforms → COWL
+  VAD → Diarization → Parameter Assignment → Voice Transform → COWL
 
 It operates on a fully segmented representation of the audio, processing
 each voiced segment independently and leaving silence and noise untouched.
@@ -21,7 +21,7 @@ Processing flow
                            │
                     [3] Speaker → MaskParams assignment
                            │
-                    [4] Per-segment WORLD vocoder transform
+                    [4] Praat LPC voice transform (pitch + formants)
                            │
                     [5] COWL irreversibility layer  (chimera.irreversible)
                            │
@@ -192,7 +192,7 @@ class ChimeraPipeline:
                 out_chunks.append(chunk)
                 continue
 
-            # [4] Vocoder transform
+            # [4] Voice transform (Praat LPC pitch + formant shift)
             masked = apply_all_layers(chunk, sr, seg.params)
 
             # [5] COWL
@@ -216,8 +216,9 @@ class ChimeraPipeline:
         if len(final) < len(audio):
             final = np.pad(final, (0, len(audio) - len(final)))
 
+        # Safety clip only — do not boost quiet audio
         peak = np.max(np.abs(final))
-        if peak > 1e-6:
+        if peak > 1.0:
             final /= peak
 
         t1 = time.perf_counter()
@@ -234,12 +235,12 @@ class ChimeraPipeline:
     # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _prepare(self, audio: np.ndarray) -> AudioArray:
-        """Ensure mono, float64, normalised."""
+        """Ensure mono, float64.  Only clip if above 1.0 — do not boost."""
         audio = np.asarray(audio, dtype=np.float64)
         if audio.ndim == 2:
             audio = audio.mean(axis=1)
         peak = np.max(np.abs(audio))
-        if peak > 1e-6:
+        if peak > 1.0:
             audio = audio / peak
         return audio
 
